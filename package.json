@@ -4,7 +4,9 @@
   "description": "<img width=\"150px\" src=\"https://www.nscc.ca/img/aboutnscc/visual-identity-guidelines/artwork/nscc-jpeg.jpg\" >",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",   
+    "dev": "nodemon app.js" ,   
+   "test": "jest"
   },
   "type": "module",
   "keywords": [],
@@ -13,5 +15,9 @@
   "dependencies": {
     "express": "^4.21.2",
     "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "socket.io-client": "^4.8.1"
   }
 }
