@@ -1,38 +1,77 @@
 const io = require('socket.io-client');
-const socketURL = 'http://localhost:3000';  // The server URL you're testing
 
-describe('Socket.IO connection tests', () => {
+const socketURL = 'http://localhost:8080';
+
+describe('Socket.IO Server Tests', () => {
     let socket;
 
-    // Establish socket connection before any tests
     beforeAll((done) => {
-        socket = io(socketURL);  // Connect to the server
-        socket.on('connect', () => { 
-            console.log('Connected to the server');  // You can log for debugging purposes
-            done();  // Call done to signal that the connection was successful
+        socket = io(socketURL, {
+            reconnection: false,
+            timeout: 7000, // Slightly increased timeout for connection
+        });
+
+        socket.once('connect', () => {
+            console.log('Connected to the server');
+            done();
+        });
+
+        socket.on('connect_error', (err) => {
+            console.error('Connection Error:', err.message);
+            done.fail(new Error('Could not connect to server'));
         });
     });
 
-    // Disconnect socket after all tests are done
     afterAll(() => {
-        socket.disconnect();  // Ensure to disconnect after tests complete
+        if (socket.connected) {
+            socket.disconnect();
+        }
         console.log('Disconnected from the server');
     });
 
-    // Test to check if socket is successfully connected
     test('should successfully connect to the server', () => {
-        // Assert that the socket is connected
         expect(socket.connected).toBe(true);
     });
 
-    // Test to check if we receive the welcome message from the server
-    test('should receive the welcome message', (done) => {
-        jest.setTimeout(30000);  // Increase timeout for this test
+    test('should update client count when a new client connects', (done) => {
+        const newSocket = io(socketURL);
 
-        socket.on('welcome', (message) => {
-            // Check if the message received is as expected
-            expect(message).toBe('Welcome to Chat Server!!!!');
-            done();  // Ensure done is called to signal test completion
+        newSocket.once('client-count', (count) => {
+            expect(count).toBeGreaterThan(0);
+            newSocket.disconnect();
+            done();
+        });
+    });
+
+    test('should send and receive messages', (done) => {
+        const testMessage = { user: 'TestUser', text: 'Hello, world!' };
+
+        socket.emit('message', testMessage);
+
+        socket.once('new-message', (message) => {
+            expect(message).toEqual(testMessage);
+            done();
+        });
+    });
+
+    test('should update client count when a client disconnects', (done) => {
+        const newSocket = io(socketURL);
+
+        newSocket.on('connect', () => {
+            newSocket.disconnect();
+        });
+
+        socket.once('client-count', (count) => {
+            expect(count).toBeGreaterThanOrEqual(0);
+            done();
+        });
+    });
+
+    test('should receive server time updates', (done) => {
+        socket.once('server-time', (time) => {
+            expect(typeof time).toBe('string'); // Ensure time is a string
+            expect(time).toMatch(/\d{2}:\d{2}:\d{2}/); // Basic format check (HH:MM:SS)
+            done();
         });
     });
 });
