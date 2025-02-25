@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 const app = express();
 
 // Define the __dirname variable
-const __dirname = path.resolve();
+const __dirname = path.resolve()
 
 // Create HTTP server and pass the Express app
 const httpServer = createServer(app);
